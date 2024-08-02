@@ -1,24 +1,9 @@
 const express = require("express");
-const mongoose = require("mongoose");
-const Product = require("./models/productModel");
-const app = express();
-
-app.use(express.json()); // Add middleware to parse JSON
-
-mongoose
-  .connect("mongodb://127.0.0.1:27017/deploy")
-  .then(() => {
-    console.log("Connected Successfully to MongoDB");
-    app.listen(4000, () => {
-      console.log("Server running on port 4000");
-    });
-  })
-  .catch((err) => {
-    console.error("Error connecting to MongoDB:", err);
-  });
+const Product = require("../models/productModel");
+const router = express.Router();
 
 // Get all products
-app.get("/", async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const products = await Product.find();
     res.status(200).json(products);
@@ -27,8 +12,8 @@ app.get("/", async (req, res) => {
   }
 });
 
-// Get product by ID
-app.get("/:id", async (req, res) => {
+// Get single product
+router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const product = await Product.findById(id);
@@ -42,7 +27,7 @@ app.get("/:id", async (req, res) => {
 });
 
 // Create new product
-app.post("/", async (req, res) => {
+router.post("/", async (req, res) => {
   const { title, price, description, category, image } = req.body;
   try {
     const product = new Product({ title, price, description, category, image });
@@ -54,10 +39,12 @@ app.post("/", async (req, res) => {
 });
 
 // Update product
-app.patch("/:id", async (req, res) => {
+router.patch("/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const product = await Product.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
+    const product = await Product.findByIdAndUpdate(id, req.body, {
+      new: true,
+    });
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
@@ -68,7 +55,7 @@ app.patch("/:id", async (req, res) => {
 });
 
 // Delete product
-app.delete("/:id", async (req, res) => {
+router.delete("/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const product = await Product.findByIdAndDelete(id);
@@ -77,6 +64,8 @@ app.delete("/:id", async (req, res) => {
     }
     res.status(200).json({ message: "Product deleted successfully" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(400).json({ error: error.message });
   }
 });
+
+module.exports = router;
